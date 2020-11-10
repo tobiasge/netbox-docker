@@ -7,6 +7,9 @@ set -e
 # Allows Netbox to be run as non-root users
 umask 002
 
+# Load correct Python3 env
+source /opt/netbox/venv/bin/activate
+
 # Try to connect to the DB
 DB_WAIT_TIMEOUT=${DB_WAIT_TIMEOUT-3}
 MAX_DB_WAIT_TIME=${MAX_DB_WAIT_TIME-30}
@@ -60,10 +63,18 @@ else
   echo "import runpy; runpy.run_path('../startup_scripts')" | ./manage.py shell --interface python
 fi
 
-# Copy static files
-./manage.py collectstatic --no-input
-
 echo "✅ Initialisation is done."
+
+(
+  UNIT_SOCKET="/opt/unit/unit.sock"
+  UNIT_CONFIG="/etc/unit/nginx-unit.json"
+  while [ ! -S $UNIT_SOCKET ]; do echo "$0: Waiting for control socket to be created..."; sleep 1; done
+  # even when the control socket exists, it does not mean unit has finished initialisation
+  # this curl call will get a reply once unit is fully launched
+  curl --silent --request GET --unix-socket $UNIT_SOCKET http://localhost/
+  echo "$0: Applying configuration from $UNIT_CONFIG";
+  curl --silent --request PUT --data-binary @$UNIT_CONFIG --unix-socket $UNIT_SOCKET http://localhost/config
+)&
 
 # Launch whatever is passed by docker
 # (i.e. the RUN instruction in the Dockerfile)
