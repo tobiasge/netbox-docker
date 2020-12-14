@@ -30,7 +30,7 @@
             "home": "/opt/netbox/venv",
             "processes": {
                 "max": 4,
-                "spare": 2,
+                "spare": 1,
                 "idle_timeout": 120
             }
         }
