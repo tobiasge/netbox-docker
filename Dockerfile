@@ -55,6 +55,7 @@ COPY ${NETBOX_PATH} /opt/netbox
 
 COPY docker/configuration.docker.py /opt/netbox/netbox/netbox/configuration.py
 COPY docker/docker-entrypoint.sh /opt/netbox/docker-entrypoint.sh
+COPY docker/launch-netbox.sh /opt/netbox/launch-netbox.sh
 COPY startup_scripts/ /opt/netbox/startup_scripts/
 COPY initializers/ /opt/netbox/initializers/
 COPY configuration/ /etc/netbox/config/
@@ -70,13 +71,7 @@ RUN mkdir -p static /opt/unit/state/ /opt/unit/tmp/ \
 
 ENTRYPOINT [ "/opt/netbox/docker-entrypoint.sh" ]
 
-CMD [ "unitd", \
-      "--no-daemon", \
-      "--control", "unix:/opt/unit/unit.sock", \
-      "--pid", "/opt/unit/unit.pid", \
-      "--log", "/dev/stdout", \
-      "--state", "/opt/unit/state/", \
-      "--tmp", "/opt/unit/tmp/" ]
+CMD [ "/opt/netbox/launch-netbox.sh" ]
 
 LABEL ORIGINAL_TAG="" \
       NETBOX_GIT_BRANCH="" \
