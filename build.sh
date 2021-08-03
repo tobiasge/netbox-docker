@@ -49,10 +49,10 @@ if [ "${1}x" == "x" ] || [ "${1}" == "--help" ] || [ "${1}" == "-h" ]; then
   echo "  DOCKERFILE  The name of Dockerfile to use."
   echo "              Default: Dockerfile"
   echo "  DOCKER_FROM The base image to use."
-  echo "              Default: 'alpine:3.14'"
+  echo "              Default: 'debian:bullseye-slim'"
   echo "  DOCKER_TARGET A specific target to build."
   echo "              It's currently not possible to pass multiple targets."
-  echo "              Default: main ldap"
+  echo "              Default: main"
   echo "  HTTP_PROXY  The proxy to use for http requests."
   echo "              Example: http://proxy.domain.tld:3128"
   echo "              Default: undefined"
@@ -157,7 +157,7 @@ fi
 # Determining the value for DOCKER_FROM
 ###
 if [ -z "$DOCKER_FROM" ]; then
-  DOCKER_FROM="alpine:3.14"
+  DOCKER_FROM="debian:bullseye-slim"
 fi
 
 ###
@@ -209,7 +209,7 @@ esac
 ###
 # Determine targets to build
 ###
-DEFAULT_DOCKER_TARGETS=("main" "ldap")
+DEFAULT_DOCKER_TARGETS=("main")
 DOCKER_TARGETS=("${DOCKER_TARGET:-"${DEFAULT_DOCKER_TARGETS[@]}"}")
 echo "🏭 Building the following targets:" "${DOCKER_TARGETS[@]}"
 
@@ -283,7 +283,7 @@ for DOCKER_TARGET in "${DOCKER_TARGETS[@]}"; do
 
       if ! printf '%s\n' "${IMAGES_LAYERS_OLD[@]}" | grep -q -P "^${PYTHON_LAST_LAYER}\$"; then
         SHOULD_BUILD="true"
-        BUILD_REASON="${BUILD_REASON} alpine"
+        BUILD_REASON="${BUILD_REASON} debian"
       fi
       if [ "${NETBOX_GIT_REF}" != "${NETBOX_GIT_REF_OLD}" ]; then
         SHOULD_BUILD="true"

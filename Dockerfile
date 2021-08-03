@@ -1,25 +1,18 @@
 ARG FROM
 FROM ${FROM} as builder
 
-RUN apk add --no-cache \
-      bash \
-      build-base \
-      cargo \
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update -qq \
+    && apt-get install --yes -qq \
+      build-essential \
       ca-certificates \
-      cyrus-sasl-dev \
-      graphviz \
-      jpeg-dev \
-      libevent-dev \
-      libffi-dev \
-      openssl-dev \
-      libxslt-dev \
-      musl-dev \
-      openldap-dev \
-      postgresql-dev \
-      py3-pip \
+      libldap-dev \
+      libsasl2-dev \
       python3-dev \
-  && python3 -m venv /opt/netbox/venv \
-  && /opt/netbox/venv/bin/python3 -m pip install --upgrade \
+      python3-pip \
+      python3-venv \
+    && python3 -m venv /opt/netbox/venv \
+    && /opt/netbox/venv/bin/python3 -m pip install --upgrade \
       pip \
       setuptools \
       wheel
@@ -37,24 +30,29 @@ RUN /opt/netbox/venv/bin/pip install \
 ARG FROM
 FROM ${FROM} as main
 
-RUN apk add --no-cache \
-      bash \
+RUN export DEBIAN_FRONTEND=noninteractive \
+    CODENAME=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d '=' -f 2) \
+    && apt-get update -qq \
+    && apt-get upgrade \
+      --yes -qq --no-install-recommends \
+    && apt-get install \
+      --yes -qq --no-install-recommends \
       ca-certificates \
       curl \
-      graphviz \
-      libevent \
-      libffi \
-      libjpeg-turbo \
       openssl \
-      libxslt \
-      postgresql-libs \
       python3 \
-      py3-pip \
+      python3-distutils \
+    && curl -sL https://nginx.org/keys/nginx_signing.key \
+      > /etc/apt/trusted.gpg.d/nginx.asc && \
+    echo "deb https://packages.nginx.org/unit/debian/ $CODENAME unit" \
+      > /etc/apt/sources.list.d/unit.list \
+    && apt-get update -qq \
+    && apt-get install \
+      --yes -qq --no-install-recommends \
       unit \
-      unit-python3 \
-      tini
-
-WORKDIR /opt
+      unit-python3.9 \
+      tini \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/netbox/venv /opt/netbox/venv
 
@@ -62,6 +60,7 @@ ARG NETBOX_PATH
 COPY ${NETBOX_PATH} /opt/netbox
 
 COPY docker/configuration.docker.py /opt/netbox/netbox/netbox/configuration.py
+COPY docker/ldap_config.docker.py /opt/netbox/netbox/netbox/ldap_config.py
 COPY docker/docker-entrypoint.sh /opt/netbox/docker-entrypoint.sh
 COPY docker/launch-netbox.sh /opt/netbox/launch-netbox.sh
 COPY docker/housekeeping.sh /opt/netbox/housekeeping.sh
@@ -74,13 +73,13 @@ WORKDIR /opt/netbox/
 
 # Must set permissions for '/opt/netbox/netbox/media' directory
 # to g+w so that pictures can be uploaded to netbox.
-RUN mkdir -p static /opt/unit/state/ /opt/unit/tmp/ \
-      && chmod -R g+w /opt/netbox/netbox/media /opt/unit/ \
+RUN mkdir -p /opt/netbox/netbox/static /opt/unit/state/ /opt/unit/tmp/ \
+      && chmod -R a+w /opt/netbox/netbox/media /opt/unit/ \
       && /opt/netbox/venv/bin/python -m mkdocs build \
           --config-file /opt/netbox/mkdocs.yml --site-dir /opt/netbox/netbox/project-static/docs/ \
       && SECRET_KEY="dummy" /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py collectstatic --no-input
 
-ENTRYPOINT [ "/sbin/tini", "--" ]
+ENTRYPOINT [ "/usr/bin/tini", "--" ]
 
 CMD [ "/opt/netbox/docker-entrypoint.sh", "/opt/netbox/launch-netbox.sh" ]
 
@@ -112,16 +111,3 @@ LABEL netbox.original-tag="" \
       org.opencontainers.image.source="https://github.com/netbox-community/netbox-docker.git" \
       org.opencontainers.image.revision="" \
       org.opencontainers.image.version="snapshot"
-
-#####
-## LDAP specific configuration
-#####
-
-FROM main as ldap
-
-RUN apk add --no-cache \
-      libsasl \
-      libldap \
-      util-linux
-
-COPY docker/ldap_config.docker.py /opt/netbox/netbox/netbox/ldap_config.py
