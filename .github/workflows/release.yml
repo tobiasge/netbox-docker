@@ -26,7 +26,7 @@ jobs:
     env:
       GH_ACTION: enable
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      IMAGE_NAMES: docker.io/netboxcommunity/netbox quay.io/netboxcommunity/netbox ghcr.io/netbox-community/netbox
+      IMAGE_NAMES: docker.io/tgenannt/netbox quay.io/tgenannt/netbox ghcr.io/tobiasge/netbox
     steps:
       - id: source-checkout
         name: Checkout
