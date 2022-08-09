@@ -80,13 +80,6 @@ END
   echo "💡 Superuser Username: ${SUPERUSER_NAME}, E-Mail: ${SUPERUSER_EMAIL}"
 fi
 
-# Run the startup scripts (and initializers)
-if [ "$SKIP_STARTUP_SCRIPTS" == "true" ]; then
-  echo "↩️ Skipping startup scripts"
-else
-  echo "import runpy; runpy.run_path('../startup_scripts')" | ./manage.py shell --interface python
-fi
-
 echo "✅ Initialisation is done."
 
 # Launch whatever is passed by docker
