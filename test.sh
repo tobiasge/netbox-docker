@@ -41,6 +41,11 @@ test_setup() {
   echo "🏗 Setup up test environment"
 }
 
+test_netbox_database_ready() {
+  echo "🏭 Testing for database ready to connect"
+  $doco run --rm netbox /opt/netbox/docker-entrypoint.sh ./manage.py check 
+}
+
 test_netbox_unit_tests() {
   echo "⏱ Running NetBox Unit Tests"
   $doco run --rm netbox /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py test
@@ -56,6 +61,7 @@ echo "🐳🐳🐳 Start testing '${IMAGE}'"
 # Make sure the cleanup script is executed
 trap test_cleanup EXIT ERR
 test_setup
+test_netbox_database_ready
 
 test_netbox_unit_tests
 
