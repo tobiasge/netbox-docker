@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     strategy:
+      max-parallel: 1
       matrix:
         build_cmd:
           - ./build-latest.sh
@@ -59,7 +60,7 @@ jobs:
           registry: quay.io
           username: ${{ secrets.quayio_username }}
           password: ${{ secrets.quayio_password }}
-        if: steps.docker-build.outputs.skipped != 'true'
+        if: steps.check-build-needed.outputs.skipped != 'true'
       # ghcr.io
       - id: ghcr-io-login
         name: Login to GitHub Container Registry
@@ -68,7 +69,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-        if: steps.docker-build.outputs.skipped != 'true'
+        if: steps.check-build-needed.outputs.skipped != 'true'
       - id: build-and-push
         name: Build and push the image
         run: ${{ matrix.build_cmd }} --push
