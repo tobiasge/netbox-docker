@@ -12,8 +12,6 @@ jobs:
           - ./build-latest.sh
         platform:
           - linux/amd64,linux/arm64
-          - linux/amd64
-          - linux/arm64
       fail-fast: false
     runs-on: ubuntu-latest
     name: Builds new NetBox Docker Images
@@ -29,17 +27,6 @@ jobs:
         name: Get Version of NetBox Docker
         run: echo "version=$(cat VERSION)" >>"$GITHUB_OUTPUT"
         shell: bash
-      - id: qemu-setup
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - id: buildx-setup
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - id: check-build-needed
-        name: Check if the build is needed for '${{ matrix.build_cmd }}'
-        env:
-          CHECK_ONLY: "true"
-        run: ${{ matrix.build_cmd }}
       # docker.io
       - id: docker-io-login
         name: Login to docker.io
@@ -49,6 +36,18 @@ jobs:
           username: ${{ secrets.dockerhub_username }}
           password: ${{ secrets.dockerhub_password }}
         if: steps.docker-build.outputs.skipped != 'true'
+      - id: buildx-setup
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: "lab:latest"
+          driver: cloud
+          endpoint: "tgenannt/test"
+      - id: check-build-needed
+        name: Check if the build is needed for '${{ matrix.build_cmd }}'
+        env:
+          CHECK_ONLY: "true"
+        run: ${{ matrix.build_cmd }}
       - id: build-and-push
         name: Build and push the image
         run: ${{ matrix.build_cmd }} --push
