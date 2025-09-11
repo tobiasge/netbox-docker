@@ -102,9 +102,15 @@ GH_ACTION   If defined, special 'echo' statements are enabled that set the
             - FINAL_DOCKER_TAG: The final value of the DOCKER_TAG env variable
             ${_GREEN}Default:${_CLEAR} undefined
 
+<<<<<<< HEAD
 CHECK_ONLY  Only checks if the build is needed and sets the GH Action output.
             ${_GREEN}Default:${_CLEAR} undefined
 
+||||||| parent of 58bcfde (Fix check)
+=======
+CHECK_ONLY  Only checks if the build is needed and sets the GH Action output.
+
+>>>>>>> 58bcfde (Fix check)
 ${_BOLD}Examples:${_CLEAR}
 
 ${0} main
@@ -411,10 +417,17 @@ if [ -n "${NO_PROXY}" ]; then
 fi
 
 DOCKER_BUILD_ARGS+=(--platform "${BUILDX_PLATFORM-linux/amd64}")
-DOCKER_BUILD_ARGS+=(
-  --output=type=docker
-)
-
+if [ "${2}" == "--push" ]; then
+  # output type=docker does not work with pushing
+  DOCKER_BUILD_ARGS+=(
+    --output=type=image
+    --push
+  )
+else
+  DOCKER_BUILD_ARGS+=(
+    --output=type=docker
+  )
+fi
 
 ###
 # Building the docker image
