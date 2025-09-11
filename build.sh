@@ -411,17 +411,10 @@ if [ -n "${NO_PROXY}" ]; then
 fi
 
 DOCKER_BUILD_ARGS+=(--platform "${BUILDX_PLATFORM-linux/amd64}")
-if [ "${2}" == "--push" ]; then
-  # output type=docker does not work with pushing
-  DOCKER_BUILD_ARGS+=(
-    --output=type=image
-    --push
-  )
-else
-  DOCKER_BUILD_ARGS+=(
-    --output=type=docker
-  )
-fi
+DOCKER_BUILD_ARGS+=(
+  --output=type=docker
+)
+
 
 ###
 # Building the docker image
